@@ -10,10 +10,19 @@ void Main()
 	var inputDirectory = $@"{parentDirectory}\Inputs";
 	var inputFile = $@"{inputDirectory}\{fileName}.txt";
 	var lines = File.ReadAllLines(inputFile);
+
+	TimeIt("Part 1", () =>
+	{
 	var r = GetAccessible(lines);
 	Console.WriteLine($"Part 1: {r.Item1}");
-	var r2 = GetAccessible2(r.Item2,r.Item1);
-	Console.WriteLine($"Part 2: {r2}");
+	});
+	TimeIt("Part 2", () =>
+	{
+		var r = GetAccessible(lines);
+		var r2 = GetAccessible2(r.Item2, r.Item1);
+		Console.WriteLine($"Part 2: {r2}");
+	});
+	
 }
 public int GetAccessible2(string[] grid,int accessible){
 	var lAccessible = accessible;
@@ -63,4 +72,12 @@ public (int,string[]) GetAccessible(string[] grid){
 	
 	return (accessible,cMap);
 }
-public List<(int,int)> Directions = new List<(int,int)>{(0,-1),(0,1),(-1,-1),(1,-1),(1,0),(-1,0),(-1,1),(1,1)};
+public List<(int, int)> Directions = new List<(int, int)> { (0, -1), (0, 1), (-1, -1), (1, -1), (1, 0), (-1, 0), (-1, 1), (1, 1) };
+void TimeIt(string label, Action action)
+{
+	var sw = System.Diagnostics.Stopwatch.StartNew();
+	action();
+	sw.Stop();
+
+	Console.WriteLine($"{label} took {sw.ElapsedMilliseconds} ms");
+}
