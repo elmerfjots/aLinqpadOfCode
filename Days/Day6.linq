@@ -31,96 +31,25 @@ void Main()
 	});
 	TimeIt("Part 2", () =>
 		{
-			// How many numeric columns exist (max per row)
-			//Behandle det som strenge så længe som muligt. Det skal paddes afhængig af hvilken side whitespace er på.
-			var colCount = GetColCount(lines);
-			var linesWithPadding = GetLinesWithPadding(lines, colCount);
-			var resultForColumn = BuildRightToLeftCumulative(linesWithPadding.Take(linesWithPadding.Count - 1).ToList(), operators.Length - 1);
+			var resultForColumn = BuildRightToLeft(lines.Take(lines.Length - 1).ToList(), operators.Length - 1);
 			var grandTotal = 0L;
 			foreach (var r in resultForColumn)
 			{
-				try
+				if (r.Item1.Any() == false) { continue; }
+				var op = operators[r.Item2];
+				var calculation = r.Item1[0];
+				for (var i = 1; i < r.Item1.Count; i++)
 				{
-					if (r.Item1.Any() == false) { continue; }
-					var op = operators[r.Item2];
-					var calculation = r.Item1[0];
-					for (var i = 1; i < r.Item1.Count; i++)
-					{
-						var b = r.Item1[i];
-						calculation = CalculateInput(calculation, b, op);
-					}
-					grandTotal += calculation;
+					var b = r.Item1[i];
+					calculation = CalculateInput(calculation, b, op);
 				}
-				catch (Exception ex)
-				{
-
-				}
-
+				grandTotal += calculation;
 			}
 			Console.WriteLine(grandTotal);
 		});
 
 }
-
-List<string> GetLinesWithPadding(string[] lines, int colCount)
-{
-	var sb = new StringBuilder();
-	var linesWithPadding = new List<string>();
-
-	for (var k = 0; k < lines[0].Length; k++)
-	{
-		var notWhitespaceFound = false;
-		for (var i = 1; i < lines.Length; i++)
-		{
-			var current = lines[i][k];
-			
-			if(notWhitespaceFound && current == ' ' || ){
-				sb.Append('#');
-			}
-			if(current != ' '){
-				notWhitespaceFound = true;
-				sb.Append(current);
-			}
-			if(notWhitespaceFound == false && i == lines.Length-1){
-				
-			}
-		}
-	}
-	
-	
-	
-	
-	foreach (var line in lines)
-	{
-		var cnt = colCount;
-		for (var i = 0; i < line.Length; i++)
-		{
-			var current = line[i];
-			if (cnt == 0)
-			{
-				sb.Append(' ');
-				cnt = colCount;
-				continue;
-			}
-			else
-			{
-				if (line[i] == ' ')
-				{
-					sb.Append("#");
-				}
-				else
-				{
-					sb.Append(current);
-				}
-			}
-			cnt--;
-		}
-		linesWithPadding.Add(sb.ToString());
-		sb.Clear();
-	}
-	return linesWithPadding;
-}
-static List<(List<long>, int)> BuildRightToLeftCumulative(List<string> paddedNums, int opCount)
+static List<(List<long>, int)> BuildRightToLeft(List<string> paddedNums, int opCount)
 {
 	var result = new List<(List<long>, int)>();
 	var oc = opCount;
@@ -131,28 +60,29 @@ static List<(List<long>, int)> BuildRightToLeftCumulative(List<string> paddedNum
 		for (int i = 0; i < paddedNums.Count; i++)
 		{
 			var current = paddedNums[i][j];
-			if (current == '#')
+			if (current != ' ')
 			{
+				sb.Append(current);
 				continue;
 			}
-			else if (current == ' ')
+			if (i == paddedNums.Count - 1 && sb.Length > 0)
+			{
+				l.Add(long.Parse(sb.ToString()));
+				sb.Clear();
+			}
+			else if (i == paddedNums.Count - 1 && sb.Length == 0)
 			{
 				result.Add((l, oc));
 				l = new List<long>();
 				oc--;
 			}
-			else
-			{
-				sb.Append(current);
-			}
-
 		}
-		if (sb.ToString() == string.Empty)
+		if (sb.Length > 0)
 		{
-			continue;
+			l.Add(long.Parse(sb.ToString()));
+			sb.Clear();
 		}
-		l.Add(long.Parse(sb.ToString()));
-		sb.Clear();
+
 	}
 	result.Add((l, opCount));
 
@@ -188,23 +118,6 @@ long CalculateInput(long a, long b, char op)
 	}
 
 
-}
-int GetColCount(string[] lines)
-{
-	var rows = lines
-		   .Select(line => Regex.Matches(line, @"\d+")
-								.Cast<Match>()
-								.Select(m => m.Value)
-								.ToList())
-		   .ToList();
-	var max = 0;
-	foreach (var row in rows)
-	{
-		if (row.Any() == false) { continue; }
-		var m = row.Max(x => x.Length);
-		max = m > max ? m : max;
-	}
-	return max;
 }
 void TimeIt(string label, Action action)
 {
