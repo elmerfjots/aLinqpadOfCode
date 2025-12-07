@@ -55,56 +55,75 @@ void Main()
 		{
 			int rows = lines.Length;
 			int cols = lines[0].Length;
+
 			var s = FindS(lines);
-			// memo[r, c] = number of paths from (r,c) to bottom row
+
 			long[,] memo = new long[rows, cols];
 			for (int r = 0; r < rows; r++)
 				for (int c = 0; c < cols; c++)
 					memo[r, c] = -1;
-			var n = Dp(s.row,s.col,memo,lines,rows,cols);
+
+			long n = Dp(s.row, s.col, memo, lines, rows, cols);
 			Console.WriteLine(n);
 		});
 
 }
 
-private long Dp(int r, int c, long[,] memo, string[] grid,int rows, int cols)
+private static bool IsTrack(char ch)
 {
-	if (!IsWalkable(grid[r][c]))
-		return 0;
-		
-	if (r == rows - 1)
-		return 1;
+    // Any cell that can have the particle on it
+    return ch == '|' || ch == '^' || ch == 'S';
+}
 
-	if (memo[r, c] != -1)
-		return memo[r, c];
+private long Dp(int r, int c, long[,] memo, string[] grid, int rows, int cols)
+{
+    char ch = grid[r][c];
 
-	long total = 0;
+    // Not on a valid track cell. no paths
+    if (!IsTrack(ch))
+        return 0;
 
-	int nr = r + 1;
+    // Reached bottom row on a valid track cell. 1 timeline
+    if (r == rows - 1)
+        return 1;
 
-	// down-left (r+1, c-1)
-	if (c - 1 >= 0 && IsWalkable(grid[nr][c - 1]))
-	{
-		total += Dp(nr, c - 1,memo,grid,rows,cols);
-	}
+    if (memo[r, c] != -1)
+        return memo[r, c];
 
-	// down-right (r+1, c+1)
-	if (c + 1 < cols && IsWalkable(grid[nr][c + 1]))
-	{
-		total += Dp(nr, c + 1,memo,grid,rows,cols);
-	}
-	if(IsWalkable(grid[nr][c])){
-		total += Dp(nr, c,memo,grid,rows,cols);
+    long total = 0;
+    int nr = r + 1;
+
+    if (ch == 'S' || ch == '|')
+    {
+        // Straight down only
+        if (IsTrack(grid[nr][c]))
+        {
+            total += Dp(nr, c, memo, grid, rows, cols);
+        }
+    }
+    else if (ch == '^')
+    {
+        // Splitter: down-left and down-right (if they are track)
+        if (c - 1 >= 0 && IsTrack(grid[nr][c - 1]))
+        {
+            total += Dp(nr, c - 1, memo, grid, rows, cols);
+		}
+
+		if (c + 1 < cols && IsTrack(grid[nr][c + 1]))
+		{
+			total += Dp(nr, c + 1, memo, grid, rows, cols);
+		}
 	}
 
 	memo[r, c] = total;
 	return total;
 }
+
 private (int row, int col) FindS(string[] lines)
 {
 	for (int r = 0; r < lines.Length; r++)
 	{
-		for (int c = 0; c < lines[0].Length; c++)
+		for (int c = 0; c < lines[r].Length; c++)
 		{
 			if (lines[r][c] == 'S')
 			{
@@ -114,10 +133,7 @@ private (int row, int col) FindS(string[] lines)
 	}
 	throw new InvalidOperationException("No start 'S' found in grid.");
 }
-private static bool IsWalkable(char ch)
-{
-	return ch == '|' || ch == 'S';
-}
+
 void TimeIt(string label, Action action)
 {
 	var sw = System.Diagnostics.Stopwatch.StartNew();
