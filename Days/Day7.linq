@@ -13,15 +13,110 @@ void Main()
 
 	TimeIt("Part 1", () =>
 	{
+		var cloneLines = lines.Clone();
+		var dripIndexes = new HashSet<int>();
+		var splitCnt = 0;
+		for (var row = 0; row < lines.Length; row++)
+		{
+			for (var col = 0; col < lines[0].Length; col++)
+			{
+				var current = lines[row][col];
+				if (current == 'S')
+				{
+					dripIndexes.Add((col));
+					continue;
+				}
+				else if (current == '|')
+				{
+					continue;
+				}
+				else if (current == '^' && dripIndexes.Contains(col))
+				{
+					dripIndexes.Remove(col);
+					dripIndexes.Add(col - 1);
+					dripIndexes.Add(col + 1);
+					splitCnt++;
+				}
+			}
+			if (row > 0)
+			{
+				foreach (var d in dripIndexes)
+				{
+					var s = lines[row].ToCharArray();
+					s[d] = '|';
+					lines[row] = new string(s);
+				}
+			}
 
-		Console.WriteLine(0);
+		}
+		Console.WriteLine(splitCnt);
 	});
 	TimeIt("Part 2", () =>
 		{
-
-			Console.WriteLine(0);
+			int rows = lines.Length;
+			int cols = lines[0].Length;
+			var s = FindS(lines);
+			// memo[r, c] = number of paths from (r,c) to bottom row
+			long[,] memo = new long[rows, cols];
+			for (int r = 0; r < rows; r++)
+				for (int c = 0; c < cols; c++)
+					memo[r, c] = -1;
+			var n = Dp(s.row,s.col,memo,lines,rows,cols);
+			Console.WriteLine(n);
 		});
 
+}
+
+private long Dp(int r, int c, long[,] memo, string[] grid,int rows, int cols)
+{
+	if (!IsWalkable(grid[r][c]))
+		return 0;
+		
+	if (r == rows - 1)
+		return 1;
+
+	if (memo[r, c] != -1)
+		return memo[r, c];
+
+	long total = 0;
+
+	int nr = r + 1;
+
+	// down-left (r+1, c-1)
+	if (c - 1 >= 0 && IsWalkable(grid[nr][c - 1]))
+	{
+		total += Dp(nr, c - 1,memo,grid,rows,cols);
+	}
+
+	// down-right (r+1, c+1)
+	if (c + 1 < cols && IsWalkable(grid[nr][c + 1]))
+	{
+		total += Dp(nr, c + 1,memo,grid,rows,cols);
+	}
+	if(IsWalkable(grid[nr][c])){
+		total += Dp(nr, c,memo,grid,rows,cols);
+	}
+
+	memo[r, c] = total;
+	return total;
+}
+private (int row, int col) FindS(string[] lines)
+{
+	for (int r = 0; r < lines.Length; r++)
+	{
+		for (int c = 0; c < lines[0].Length; c++)
+		{
+			if (lines[r][c] == 'S')
+			{
+				return (r, c);
+			}
+		}
+	}
+	throw new InvalidOperationException("No start 'S' found in grid.");
+}
+private static bool IsWalkable(char ch)
+{
+	return ch == '|' || ch == 'S';
 }
 void TimeIt(string label, Action action)
 {
