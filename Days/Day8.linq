@@ -141,7 +141,7 @@ public class DSU
 	}
 
 	// Return the size of the circuit that x belongs to.
-	public int circuitSize(int x) => size[Find(x)];
+	public int CircuitSize(int x) => size[Find(x)];
 
 	// Build a dictionary of circuit sizes: root -> size.
 	public Dictionary<int, int> GetCircuitSizes()
